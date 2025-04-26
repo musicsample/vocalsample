@@ -1130,11 +1130,17 @@
             .netflix-logo-text {
                 font-size: 2.5rem; /* 小さい画面では文字サイズを縮小 */
                 width: 350px;
+                text-align: center; /* スマホ表示でも中央揃え */
+                margin: 0 auto; /* 中央揃えのため左右マージンを自動に */
             }
             
             .netflix-logo,
             .netflix-logo-container {
                 width: 350px;
+                display: flex; /* フレックスボックスを使用 */
+                justify-content: center; /* 中央揃え */
+                margin: 0 auto; /* 中央揃えのために左右マージンを自動に */
+                text-align: center; /* テキストを中央揃え */
             }
         }
         
@@ -1470,7 +1476,7 @@
         <div class="content-header">
             <h1>ボーカルコレクション</h1>
         </div>
-        <p class="description">まずは聴いてみてください<br>気に入ったならあなただけのものにできますが、もちろん選択はあなた次第です。</p>
+        <p class="description">各サンプルは視聴可能です<br>ダウンロードは１名様限定になります<br>ご自由に選んでくださいね</p>
 
         <div id="mp3-list">
             <!-- MP3 items will be inserted here by JavaScript -->
@@ -1487,9 +1493,9 @@
         <div class="footer-content">
             <div class="footer-section">
                 <div style="text-align: center; margin: 0 auto; max-width: 600px;">
-                    <p style="color: var(--netflix-light-grey); font-size: 1.1rem; line-height: 2; margin-bottom: 10px;">本サイトでは各サンプル、１名様限定となっています。</p>
-                    <p style="color: var(--netflix-light-grey); font-size: 1.1rem; line-height: 2; margin-bottom: 10px;">本サイトのサンプルはUdioの有料プランで生成された曲です。</p>
-                    <p style="color: var(--netflix-light-grey); font-size: 1.1rem; line-height: 2; margin-bottom: 10px;">ダウンロードしたmp3はご自由にお使いください。</p>
+                    <p style="color: var(--netflix-light-grey); font-size: 0.85rem; line-height: 1.6; margin-bottom: 8px; white-space: nowrap;">各サンプルのダウンロードは１名様限定となっています。</p>
+                    <p style="color: var(--netflix-light-grey); font-size: 0.85rem; line-height: 1.6; margin-bottom: 8px; white-space: nowrap;">本サイトのサンプルはUdioの有料プランで生成された曲です。</p>
+                    <p style="color: var(--netflix-light-grey); font-size: 0.85rem; line-height: 1.6; margin-bottom: 8px; white-space: nowrap;">ダウンロードしたmp3はご自由にお使いください。</p>
                 </div>
             </div>
         </div>
