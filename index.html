@@ -1491,15 +1491,25 @@
 
     <footer>
         <div class="footer-content">
-            <div class="footer-section">
-                <div style="text-align: center; margin: 0 auto; max-width: 600px;">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin: 0 auto; max-width: 1000px; gap: 20px;">
+                <!-- 左側: 説明テキスト -->
+                <div style="flex: 1; min-width: 300px; text-align: left;">
+                    <h3 style="color: white; font-size: 1rem; margin-bottom: 15px; font-weight: normal; text-align: left;">VocalSampleについて</h3>
                     <p style="color: var(--netflix-light-grey); font-size: 0.85rem; line-height: 1.6; margin-bottom: 8px; white-space: nowrap;">各サンプルのダウンロードは１名様限定となっています。</p>
                     <p style="color: var(--netflix-light-grey); font-size: 0.85rem; line-height: 1.6; margin-bottom: 8px; white-space: nowrap;">本サイトのサンプルはUdioの有料プランで生成された曲です。</p>
                     <p style="color: var(--netflix-light-grey); font-size: 0.85rem; line-height: 1.6; margin-bottom: 8px; white-space: nowrap;">ダウンロードしたmp3はご自由にお使いください。</p>
                 </div>
+                
+                <!-- 右側: Notionリンク -->
+                <div style="flex: 1; min-width: 300px;">
+                    <h3 style="color: white; font-size: 1rem; margin-bottom: 15px; font-weight: normal; text-align: left;">制作過程 <span style="font-size: 0.7rem; color: var(--netflix-grey);">※Notionサイトに遷移します</span></h3>
+                    <div id="notion-links" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <!-- Notionリンクはここに動的に挿入されます -->
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="copyright">
+        <div class="copyright" style="margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px;">
             🄯 2025 サンプルボーカル | Some Rights Reserved - Copyleft
         </div>
     </footer>
@@ -1549,6 +1559,7 @@
             // MP3ファイルを読み込む - 遅延させる
             setTimeout(() => {
                 loadAllMP3Files();
+                // Notionリンクはloadアルファベーツファイル完了後に自動的に読み込まれます
             }, 1000); // 1秒遅延
             
             // ページネーションボタンのイベント設定
@@ -1696,6 +1707,9 @@
                     
                     // ローディングを非表示
                     hideLoading();
+                    
+                    // MP3データが読み込まれた後でNotionリンクを読み込む
+                    loadNotionLinks();
                 })
                 .catch((error) => {
                     console.error('MP3データの読み込みエラー:', error);
@@ -2347,6 +2361,70 @@
             // Update the now playing indicator on page load
             setTimeout(updateNowPlayingIndicator, 500);
         };
+
+        // Notionリンクを読み込んでフッターに表示する
+        function loadNotionLinks() {
+            const notionLinksContainer = document.getElementById('notion-links');
+            if (!notionLinksContainer) return;
+            
+            // notionLinksContainerを空にする
+            notionLinksContainer.innerHTML = '';
+            
+            // MP3に関連付けられたNotionリンクを取得
+            let mp3NotionLinks = allMP3Files.filter(file => file.notionUrl && file.notionTitle);
+            
+            // Notion専用のデータも取得
+            database.ref('notion').once('value')
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        snapshot.forEach((childSnapshot) => {
+                            const key = childSnapshot.key;
+                            const data = childSnapshot.val();
+                            if (data.notionUrl && data.notionTitle) {
+                                // 既に追加済みのURLと重複しないように確認
+                                if (!mp3NotionLinks.some(link => link.notionUrl === data.notionUrl)) {
+                                    mp3NotionLinks.push({
+                                        key: 'notion_' + key,
+                                        notionTitle: data.notionTitle,
+                                        notionUrl: data.notionUrl
+                                    });
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Notionリンクが存在しない場合
+                    if (mp3NotionLinks.length === 0) {
+                        notionLinksContainer.innerHTML = '<p style="color: var(--netflix-grey); font-size: 0.85rem;">データベースが見つかりません</p>';
+                        return;
+                    }
+                    
+                    // Notionリンクを表示
+                    mp3NotionLinks.forEach(link => {
+                        const linkElement = document.createElement('a');
+                        linkElement.href = link.notionUrl;
+                        linkElement.target = '_blank';
+                        linkElement.rel = 'noopener noreferrer';
+                        linkElement.style.color = '#4285F4';
+                        linkElement.style.textDecoration = 'none';
+                        linkElement.style.fontSize = '0.85rem';
+                        linkElement.style.display = 'flex';
+                        linkElement.style.alignItems = 'center';
+                        linkElement.style.marginBottom = '0';
+                        linkElement.style.padding = '5px';
+                        linkElement.style.whiteSpace = 'nowrap';
+                        linkElement.style.overflow = 'hidden';
+                        linkElement.style.textOverflow = 'ellipsis';
+                        linkElement.innerHTML = `<i class="fas fa-external-link-alt" style="margin-right: 8px; font-size: 0.8rem; flex-shrink: 0;"></i> <span style="overflow: hidden; text-overflow: ellipsis;">${link.notionTitle}</span>`;
+                        
+                        notionLinksContainer.appendChild(linkElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Notionデータの読み込みエラー:', error);
+                    notionLinksContainer.innerHTML = '<p style="color: var(--netflix-grey); font-size: 0.85rem;">データベース情報の読み込みに失敗しました</p>';
+                });
+        }
     </script>
 </body>
 </html> 
