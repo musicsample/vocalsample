@@ -1,0 +1,2346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-PSK6V5K');</script>
+    <!-- End Google Tag Manager -->
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    
+    <!-- Swiper JS -->
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3JQJ50606G"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-3JQJ50606G');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MP3プレーヤーアプリ - お気に入りの音楽を聴いたり管理したりできるシンプルなインターフェース">
+    <title>ボーカルコレクション</title>
+    <style>
+        :root {
+            /* Netflix inspired color palette */
+            --netflix-black: #141414;
+            --netflix-dark: #181818;
+            --netflix-darker: #0f0f0f;
+            --netflix-grey: #808080;
+            --netflix-light-grey: #b3b3b3;
+            --netflix-lighter-grey: #e5e5e5;
+            --netflix-red: #E50914;
+            --netflix-red-hover: #f40612;
+            --netflix-red-active: #b2070e;
+            
+            /* Spacing */
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-xxl: 3rem;
+            
+            /* Layout */
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            
+            /* Transitions */
+            --transition-speed: 0.2s;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #fff;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden; /* 横スクロールを無効化 */
+            width: 100%;
+            max-width: 100vw; /* ビューポート幅を超えない */
+        }
+        
+        /* Loading Spinner Styles */
+        #loading-spinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .netflix-loader {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .netflix-logo {
+            position: relative;
+            width: 400px; /* 300pxから拡大 */
+            height: 120px; /* 高さも確保 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: visible; /* テキストがはみ出しても表示 */
+            animation: netflix-intro 1.5s ease-out forwards;
+            margin: 0 auto; /* 中央揃え */
+        }
+
+        /* ロゴを完全に表示されるために幅を調整 */
+        .netflix-logo-text {
+            color: var(--netflix-red);
+            font-size: 3rem; /* サイズ調整 */
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: -1px; /* 文字間隔をさらに縮める */
+            position: relative;
+            display: inline-block;
+            text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+            background: linear-gradient(
+                90deg, 
+                var(--netflix-red) 0%, 
+                #ff3348 45%,
+                #fff 50%, 
+                #ff3348 55%, 
+                var(--netflix-red) 100%
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-fill-color: transparent;
+            animation: netflixShine 3s ease-in-out infinite;
+            white-space: nowrap; /* 改行させない */
+            width: 400px; /* 明示的に幅を固定 */
+        }
+
+        /* ロゴの文字を一文字ずつ現れるアニメーション */
+        @keyframes netflix-text-reveal {
+            0% {
+                width: 0;
+                opacity: 0;
+            }
+            20% {
+                width: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 100%;
+                opacity: 1;
+            }
+        }
+
+        /* ロゴのコンテナの設定 */
+        .netflix-logo-container {
+            position: relative;
+            overflow: visible; /* 重要: hiddenからvisibleに変更 */
+            display: inline-block;
+            width: 400px; /* コンテナ幅を固定 */
+        }
+
+        /* 音符のスタイル */
+        .music-note {
+            display: inline-block;
+            opacity: 0;
+            font-size: 3rem; /* 音符のサイズを大きく */
+            animation: fadeInNote 0.8s ease 3.2s forwards; /* アニメーションを早く開始 */
+            transform: translateY(5px) scale(0.8);
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        /* 音符が表示されるアニメーション */
+        @keyframes fadeInNote {
+            0% {
+                opacity: 0;
+                transform: translateY(5px) scale(0.8);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(-10px) scale(1.2);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* 一文字ずつ表示されるアニメーション用のオーバーレイ */
+        .netflix-logo-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            animation: netflix-text-reveal 4s cubic-bezier(0.77, 0, 0.18, 1) forwards; /* 2.5秒から4秒に延長 */
+            transform-origin: right;
+        }
+        
+        /* Chrome、Safari向けのFallback */
+        @supports not (background-clip: text) {
+            .netflix-logo-text {
+                color: var(--netflix-red);
+                -webkit-text-fill-color: var(--netflix-red);
+                text-fill-color: var(--netflix-red);
+                animation: netflixPulse 2s ease-in-out infinite; /* 3秒から2秒に短縮 */
+            }
+            
+            @keyframes netflixPulse {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.7;
+                }
+            }
+        }
+        
+        /* 光が横に流れるアニメーション */
+        @keyframes netflixShine {
+            0% {
+                background-position: -100% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+        
+        /* ロゴが拡大するアニメーション */
+        @keyframes netflix-intro {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            20% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+            35% {
+                transform: scale(0.95);
+            }
+            50% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        /* 横の赤線を削除 */
+        .netflix-logo::before, .netflix-logo::after {
+            display: none;
+        }
+        
+        /* アニメーション用のキーフレームは残しておくが使用しない */
+        @keyframes netflix-line {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+        
+        #loading-spinner .loading-text {
+            color: var(--netflix-light-grey);
+            font-size: 1.2rem;
+            margin-top: 20px;
+            opacity: 0;
+            animation: fadeIn 0.5s 6s forwards; /* 5秒から6秒に延長 */
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        header {
+            background-color: var(--netflix-darker);
+            padding: var(--space-md) var(--space-xl);
+            position: static;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--netflix-red);
+            text-decoration: none;
+        }
+        
+        main {
+            flex: 1;
+            padding: var(--space-lg) var(--space-xl);
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box; /* パディングを含めたサイズに */
+        }
+        
+        .content-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: var(--space-md);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+            text-align: center;
+            color: var(--netflix-red);
+        }
+        
+        .description {
+            font-size: 0.9rem;
+            color: var(--netflix-light-grey);
+            margin: var(--space-sm) 0 var(--space-lg);
+            text-align: center;
+        }
+        
+        /* MP3 List Styles */
+        #mp3-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        /* Carousel Styles */
+        .carousel-section {
+            position: relative;
+            margin-bottom: 40px;
+            width: 100%;
+            padding: 0;
+            overflow: hidden; /* visible から hidden に変更 */
+            background-color: #000;
+        }
+        
+        .swiper-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 40px 0 20px;
+            overflow: hidden; /* visible から hidden に変更 */
+        }
+        
+        .swiper-wrapper {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            padding: 10px 0;
+            padding-left: 0;
+        }
+        
+        .swiper-slide {
+            height: 280px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            opacity: 0.8;
+            width: 400px;
+            max-width: 90vw; /* ビューポートの90%を超えないように */
+        }
+        
+        .swiper-slide-active {
+            opacity: 1;
+            transform: translateY(-10px) scale(1.05);
+            z-index: 2;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        .swiper-slide-prev, 
+        .swiper-slide-next {
+            opacity: 0.9;
+            z-index: 1;
+        }
+        
+        .swiper-slide-visible {
+            opacity: 1;
+        }
+        
+        .radius101000 {
+            border-radius: 16px;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .carousel-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, 
+                rgba(0, 0, 0, 0) 0%,
+                rgba(0, 0, 0, 0) 40%, 
+                rgba(0, 0, 0, 0.7) 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            border-radius: 16px;
+        }
+        
+        .carousel-content {
+            position: absolute;
+            right: auto;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0;
+            width: calc(100% - 40px); /* 左右のパディングを考慮したサイズ */
+        }
+        
+        .carousel-play-button {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: var(--netflix-red);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            flex-shrink: 0;
+            order: 0;
+            margin-right: 10px;
+            margin-left: 0;
+        }
+        
+        .carousel-title {
+            font-weight: bold;
+            font-size: 1rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            max-width: calc(100% - 60px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            order: 1;
+            font-family: 'Courier New', monospace; /* 等幅フォントに変更 */
+            letter-spacing: -0.5px; /* 文字間を詰める */
+        }
+        
+        .carousel-prev,
+        .carousel-next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            opacity: 0.7;
+        }
+        
+        .carousel-prev:hover,
+        .carousel-next:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+            transform: translateY(-50%) scale(1.1);
+            opacity: 1;
+        }
+        
+        .carousel-prev {
+            left: 10px;
+        }
+        
+        .carousel-next {
+            right: 10px;
+        }
+        
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .carousel-dot.active {
+            background-color: var(--netflix-red);
+            transform: scale(1.2);
+        }
+        
+        .swiper-pagination {
+            position: relative;
+            bottom: 0 !important;
+            margin-top: 15px;
+        }
+        
+        .swiper-pagination-bullet {
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.3);
+            opacity: 1;
+        }
+        
+        .swiper-pagination-bullet-active {
+            background-color: var(--netflix-red);
+            transform: scale(1.2);
+        }
+        
+        /* MP3 Item styles */
+        .mp3-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: visible; /* 番号がはみ出せるようにoverflowをvisibleに変更 */
+            background-color: #141414;
+            display: flex;
+            padding: 12px;
+            min-height: 170px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 15px;
+            width: 100%;
+            padding-left: 30px; /* 左側の余白を少なくして番号を枠の外に */
+            box-sizing: border-box; /* ボックスサイズを確実に設定 */
+        }
+        
+        .mp3-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .mp3-number-display {
+            position: absolute;
+            left: -22px; /* 左にはみ出すように設定 */
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #e50914;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 22px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+            z-index: 2;
+        }
+        
+        /* 最初のアイテム特有のスタイル - 緑色の枠を削除 */
+        .mp3-item:first-child {
+            position: relative;
+            /* 初期表示での緑の枠を削除 */
+            border: 1px solid #333; /* 他のアイテムと同じボーダーに */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* 他のアイテムと同じ影に */
+        }
+        
+        .mp3-item:first-child .mp3-number-display {
+            /* 緑色背景を削除し、すべて赤色に統一 */
+            background-color: #e50914;
+        }
+        
+        .mp3-thumbnail {
+            position: absolute;
+            left: 15px; /* サムネイルの位置を調整 */
+            top: 0;
+            width: 170px; /* 幅を調整 */
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .mp3-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+        
+        .mp3-thumbnail .no-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #777;
+            background-color: #222;
+        }
+        
+        .mp3-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 15px 5px 15px 15px;
+            margin-left: 190px; /* サムネイル幅に合わせて調整 */
+            margin-right: 10px;
+            max-width: none; /* 最大幅の制限を削除 */
+            width: calc(100% - 200px); /* サムネイル+マージン分を引いた幅にする */
+            flex-grow: 1; /* 利用可能なスペースいっぱいに広がる */
+        }
+        
+        .mp3-title {
+            font-weight: bold;
+            font-size: 22px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            margin-bottom: 20px;
+            color: #fff;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 15px; /* ボタン間の間隔を増やす */
+            justify-content: flex-start;
+            width: 100%;
+            flex-wrap: wrap; /* 小さい画面で折り返すようにする */
+        }
+        
+        /* Ribbon Effect */
+        .ribbon-wrapper {
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 3;
+            overflow: hidden;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .ribbon {
+            position: absolute;
+            top: 20px;
+            right: -28px;
+            padding: 0;
+            width: 120px;
+            background: #e50914;
+            color: #fff;
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            line-height: 18px;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+            border: 1px solid rgba(180, 8, 8, 0.5);
+        }
+        
+        .ribbon:before {
+            content: "先着一名限定";
+        }
+        
+        .play-btn, .download-button {
+            padding: 0 10px; /* 左右のパディングを追加 */
+            height: 42px; /* 高さを少し大きく */
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border: none;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .play-btn {
+            background-color: #2196F3; /* 明るい青色 */
+            width: 120px;
+        }
+        
+        .play-btn:hover {
+            background-color: #1976D2; /* ホバー時は少し暗い青色 */
+        }
+        
+        .download-button {
+            background-color: #4CAF50; /* 明るい緑色 */
+            width: 170px; /* ダウンロードボタンをさらに広く */
+        }
+        
+        .download-button:hover {
+            background-color: #388E3C; /* ホバー時は少し暗い緑色 */
+        }
+        
+        .play-btn i, .download-button i {
+            font-size: 1rem;
+            margin-right: 8px; /* アイコンとテキストの間隔を調整 */
+        }
+        
+        .no-items {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: var(--space-xl);
+            gap: var(--space-md);
+        }
+        
+        .page-info {
+            color: var(--netflix-light-grey);
+            font-size: 18px; /* フォントサイズを大きく */
+            padding: 0 20px; /* 左右のパディングを増加 */
+        }
+        
+        .pagination-btn {
+            padding: 16px 24px; /* パディングを2倍に */
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            border-radius: 8px; /* 角丸を大きく */
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* トランジションを追加 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px; /* 最小幅を2倍に */
+            font-size: 18px; /* フォントサイズを大きく */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 影を追加 */
+        }
+        
+        .pagination-btn:hover:not([disabled]) {
+            background-color: var(--netflix-red);
+            transform: translateY(-2px); /* ホバー時に少し浮き上がる効果 */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* 影を強調 */
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 修正：prevPageBtnとnextPageBtnにpagination-btnクラスを追加するためのスタイル */
+        #prev-page, #next-page {
+            font-size: 16px;
+            width: 120px; /* 幅を明示的に設定 */
+            height: 60px; /* 高さを明示的に設定 */
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        #prev-page:hover:not([disabled]), 
+        #next-page:hover:not([disabled]) {
+            background-color: var(--netflix-red);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        #prev-page:disabled, 
+        #next-page:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--netflix-darker);
+            padding: var(--space-xl) var(--space-xl) var(--space-lg);
+            margin-top: auto;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: var(--space-xl);
+        }
+        
+        .footer-section {
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .footer-section h3 {
+            color: var(--netflix-lighter-grey);
+            margin-bottom: var(--space-md);
+            font-size: 1.1rem;
+        }
+        
+        .footer-section p {
+            color: var(--netflix-grey);
+            font-size: 0.9rem;
+            margin-bottom: var(--space-md);
+        }
+        
+        .footer-bullet-list {
+            list-style: disc !important;
+            display: block !important;
+            padding-left: 1.5rem;
+        }
+        
+        .footer-bullet-list li {
+            margin-bottom: 0.75rem;
+            color: var(--netflix-light-grey);
+            font-size: 0.9rem;
+        }
+        
+        .footer-section li {
+            margin-bottom: var(--space-sm);
+        }
+        
+        .footer-section a {
+            color: var(--netflix-grey);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color var(--transition-speed);
+        }
+        
+        .footer-section a:hover {
+            color: var(--netflix-lighter-grey);
+            text-decoration: underline;
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: var(--space-xl);
+            padding-top: var(--space-md);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--netflix-grey);
+            font-size: 0.8rem;
+        }
+        
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: var(--space-md) var(--space-lg);
+            background-color: var(--netflix-dark);
+            color: var(--netflix-lighter-grey);
+            border-radius: var(--border-radius-sm);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transform: translateY(30px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .notification.success {
+            background-color: #2E7D32;
+        }
+        
+        .notification.error {
+            background-color: var(--netflix-red);
+        }
+        
+        .notification.info {
+            background-color: #0277BD;
+        }
+        
+        /* MP3 Card Now Playing Styles */
+        .mp3-card.now-playing, .mp3-item.now-playing {
+            border: 2px solid #4CAF50 !important; /* !important を追加して他のスタイルを上書き */
+            background-color: rgba(76, 175, 80, 0.05);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important; /* !important を追加して他のスタイルを上書き */
+        }
+        
+        .mp3-card.now-playing .mp3-card-title, .mp3-item.now-playing .mp3-title {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        /* Now Playing Styles */
+        .now-playing-header {
+            display: none;
+            background: #f0f8ff;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 5px solid #4CAF50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .now-playing-content {
+            display: flex;
+            align-items: center;
+        }
+        
+        .now-playing-label {
+            font-weight: bold;
+            margin-right: 10px;
+            color: #4CAF50;
+        }
+        
+        .now-playing-title {
+            font-style: italic;
+            color: #333;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* MP3 Item and Card Now Playing Styles */
+        .mp3-card.now-playing, .mp3-item.now-playing {
+            border: 2px solid #4CAF50 !important; /* !important を追加して他のスタイルを上書き */
+            background-color: rgba(76, 175, 80, 0.05);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important; /* !important を追加して他のスタイルを上書き */
+        }
+        
+        .mp3-card.now-playing .mp3-card-title, 
+        .mp3-item.now-playing .mp3-title {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        /* MP3カードが再生中の場合のスタイル */
+        .mp3-card.now-playing {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            header, main, footer {
+                padding: var(--space-md);
+            }
+            
+            .mp3-item {
+                flex-direction: column;
+                height: auto;
+                min-height: auto;
+                padding: 0 0 15px 0; /* 上下左右のパディングを調整 */
+                overflow: visible;
+            }
+            
+            .mp3-number-display {
+                left: 10px;
+                top: 15px;
+                transform: none;
+                z-index: 5; /* サムネイル上に確実に表示 */
+            }
+            
+            .mp3-thumbnail {
+                position: relative;
+                width: 100%;
+                height: 220px; /* サムネイルを少し大きく */
+                margin-bottom: 15px; /* サムネイルの下にマージン追加 */
+                left: 0;
+            }
+            
+            /* リボンを表示する (PCと同じスタイルに) */
+            .mp3-thumbnail .ribbon-wrapper {
+                display: block;
+                position: absolute;
+                width: 100px; /* 幅を大きく */
+                height: 100px; /* 高さを大きく */
+                overflow: hidden;
+                top: 0;
+                right: 0;
+                z-index: 3;
+            }
+            
+            .ribbon {
+                position: absolute;
+                top: 25px; /* 位置調整 */
+                right: -30px; /* 位置調整 */
+                width: 150px; /* 幅を大きく */
+                background: #e50914;
+                color: #fff;
+                text-align: center;
+                font-weight: bold;
+                font-size: 14px; /* フォントサイズを大きく */
+                line-height: 24px; /* 行の高さを大きく */
+                transform: rotate(45deg);
+                box-shadow: 0 3px 7px rgba(0,0,0,0.3); /* 影を強く */
+                text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                border: 1px solid rgba(180, 8, 8, 0.5);
+                max-width: none;
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .ribbon:before {
+                content: "先着一名限定"; /* 元の内容に戻す */
+            }
+            
+            /* ボタンレイアウトの調整 */
+            .button-container {
+                position: relative; /* リボンの配置の基準点 */
+                padding-right: 40px; /* リボンのためのスペース */
+                margin-bottom: 20px; /* 下部に余白を追加 */
+            }
+            
+            /* ダウンロードボタンの調整 */
+            .download-button {
+                position: relative; /* リボンとの関係を設定 */
+                z-index: 2; /* リボンの下にならないように */
+            }
+            
+            /* ボタンレイアウトの調整 */
+            .mp3-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .button-container {
+                position: relative;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        
+        /* さらに小さい画面向け */
+        @media (max-width: 480px) {
+            header, main, footer {
+                padding: var(--space-sm);
+            }
+            
+            .mp3-thumbnail {
+                height: 180px; /* 小さい画面用にサムネイルを小さく */
+            }
+            
+            .mp3-title {
+                font-size: 18px;
+            }
+            
+            .mp3-number-display {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+                left: 5px;
+                top: 10px;
+            }
+            
+            .play-btn, .download-button {
+                width: 90%; /* 小さい画面では幅を広げる */
+            }
+            
+            /* 超小型画面用のリボン調整 */
+            .mp3-thumbnail .ribbon-wrapper {
+                width: 90px;
+                height: 90px;
+            }
+            
+            .ribbon {
+                top: 22px;
+                right: -30px;
+                width: 140px;
+                font-size: 13px;
+                line-height: 22px;
+            }
+            
+            .netflix-logo-text {
+                font-size: 2.5rem; /* 小さい画面では文字サイズを縮小 */
+                width: 350px;
+            }
+            
+            .netflix-logo,
+            .netflix-logo-container {
+                width: 350px;
+            }
+        }
+        
+        .mp3-card-thumbnail {
+            height: auto;
+            width: 280px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mp3-card-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .mp3-card-number {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #e50914;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 22px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .mp3-card-number:hover {
+            background-color: #ff0a16;
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+        
+        .mp3-card-number-edit {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 45px;
+            height: 45px;
+            z-index: 3;
+            display: none;
+        }
+        
+        .mp3-card-number-edit input {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #ff0a16;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 0;
+            box-shadow: 0 0 10px rgba(255, 10, 22, 0.5);
+            transition: all 0.2s ease;
+        }
+        
+        .mp3-card-number-edit input:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(255, 10, 22, 0.7);
+            border: 2px solid #ff3b44;
+        }
+        
+        .mp3-card-info {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+        
+        .mp3-card-meta {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+        
+        .mp3-card-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Custom styles */
+        .mp3-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: flex-start;
+        }
+
+        .mp3-card {
+            display: flex;
+            flex-direction: column;
+            width: calc(33.33% - 20px);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .mp3-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .mp3-card-thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .mp3-card-info {
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        .mp3-card-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .mp3-card-description {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .mp3-card-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .play-btn, .download-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .play-btn {
+            background-color: #2196F3; /* 明るい青色 */
+            color: white;
+        }
+
+        .play-btn:hover {
+            background-color: #1976D2; /* ホバー時は少し暗い青色 */
+        }
+
+        .download-button {
+            background-color: #4CAF50; /* 明るい緑色 */
+            color: white;
+        }
+
+        .download-button:hover {
+            background-color: #388E3C; /* ホバー時は少し暗い緑色 */
+        }
+
+        /* ダウンロード済みボタンのスタイル */
+        .download-button.downloaded {
+            background-color: #9E9E9E; /* グレー色 */
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .download-button.downloaded:hover {
+            background-color: #9E9E9E; /* ホバー時も同じグレー色 */
+        }
+
+        /* スマホ表示時のカルーセルナビゲーション調整 */
+        @media (max-width: 768px) {
+            .carousel-prev,
+            .carousel-next,
+            .swiper-button-prev,
+            .swiper-button-next {
+                display: none !important;
+            }
+        }
+
+        /* ダウンロードボタン横のリボンは削除 */
+        .download-button::after {
+            display: none;
+        }
+        
+        .mp3-content {
+            padding: 0 20px; /* 左右のパディングを追加 */
+            margin-left: 0;
+            width: 100%;
+            text-align: center; /* テキストを中央揃え */
+            margin-bottom: 10px;
+        }
+        
+        .mp3-title {
+            font-size: 20px; /* フォントサイズを少し小さく */
+            margin-bottom: 15px; /* タイトル下のマージンを追加 */
+            text-align: center; /* タイトルを中央揃え */
+        }
+        
+        .button-container {
+            flex-direction: column; /* ボタンを縦に配置 */
+            gap: 10px;
+            width: 100%;
+            align-items: center; /* ボタンを中央揃え */
+            position: relative;
+        }
+        
+        .play-btn, .download-button {
+            width: 80%; /* ボタン幅を画面に対する割合で設定 */
+            max-width: 250px; /* 最大幅を設定 */
+            height: 45px; /* タップしやすいように少し大きく */
+            position: relative;
+        }
+        
+        /* ダウンロードボタンのスタイル調整 */
+        .download-button {
+            display: inline-flex; /* flexレイアウトに変更 */
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* ボタンレイアウトの調整 */
+        .button-container {
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-right: 0;
+            margin-bottom: 20px;
+        }
+        
+        /* ボタンレイアウトの調整 */
+        .mp3-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 大きな音符のスタイル - 画面中央に表示 */
+        .big-music-note {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 6rem;
+            color: var(--netflix-red);
+            opacity: 0;
+            text-shadow: 0 0 10px rgba(229, 9, 20, 0.7);
+            animation: bigNoteAppear 1s ease 3.5s forwards;
+            z-index: 10;
+        }
+
+        /* 大きな音符が表示されるアニメーション */
+        @keyframes bigNoteAppear {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0) rotate(-20deg);
+            }
+            70% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2) rotate(10deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) rotate(0);
+            }
+        }
+
+        /* 音符のスタイルは削除（もう使わないため） */
+        .music-note {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PSK6V5K"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner">
+        <div class="netflix-loader">
+            <div class="netflix-logo">
+                <div class="netflix-logo-container">
+                    <div class="netflix-logo-text">VocalSample</div>
+                </div>
+            </div>
+            <!-- 画面中央に大きな音符を表示 -->
+            <div class="big-music-note">♪</div>
+        </div>
+        <!-- 読み込み中のテキストを削除 -->
+    </div>
+
+    <header>
+        <div class="header-content">
+            <a href="#" class="logo">VocalSample</a>
+        </div>
+    </header>
+
+    <!-- Carousel Slider -->
+    <div class="carousel-section">
+        <div id="carouselContainer" class="swiper-container">
+            <div id="carouselTrack" class="swiper-wrapper">
+                <!-- Carousel slides will be dynamically generated here -->
+            </div>
+            <div class="swiper-pagination" id="carouselDots"></div>
+            <div class="swiper-button-prev carousel-prev"></div>
+            <div class="swiper-button-next carousel-next"></div>
+        </div>
+    </div>
+
+    <!-- Now Playing Header -->
+    <div class="now-playing-header" id="nowPlayingHeader" style="display: none;">
+        <div class="now-playing-content">
+            <div class="now-playing-label">Now Playing:</div>
+            <div class="now-playing-title" id="nowPlayingTitle">No track playing</div>
+        </div>
+    </div>
+
+    <main>
+        <div class="content-header">
+            <h1>ボーカルコレクション</h1>
+        </div>
+        <p class="description">まずは聴いてみてください<br>気に入ったならあなただけのものにできますが、もちろん選択はあなた次第です。</p>
+
+        <div id="mp3-list">
+            <!-- MP3 items will be inserted here by JavaScript -->
+        </div>
+
+        <div class="pagination">
+            <button id="prev-page" class="pagination-button" disabled><i class="fas fa-chevron-left" style="font-size: 20px; margin-right: 8px;"></i>前のページ</button>
+            <div class="page-info">1 / 3</div>
+            <button id="next-page" class="pagination-button" disabled>次のページ<i class="fas fa-chevron-right" style="font-size: 20px; margin-left: 8px;"></i></button>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <div style="text-align: center; margin: 0 auto; max-width: 600px;">
+                    <p style="color: var(--netflix-light-grey); font-size: 1.1rem; line-height: 2; margin-bottom: 10px;">本サイトでは各サンプル、１名様限定となっています。</p>
+                    <p style="color: var(--netflix-light-grey); font-size: 1.1rem; line-height: 2; margin-bottom: 10px;">本サイトのサンプルはUdioの有料プランで生成された曲です。</p>
+                    <p style="color: var(--netflix-light-grey); font-size: 1.1rem; line-height: 2; margin-bottom: 10px;">ダウンロードしたmp3はご自由にお使いください。</p>
+                </div>
+            </div>
+        </div>
+        <div class="copyright">
+            🄯 2025 サンプルボーカル | Some Rights Reserved - Copyleft
+        </div>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <script>
+        // Firebase設定
+        const firebaseConfig = {
+            databaseURL: "https://vocalsample-f9e8e-default-rtdb.firebaseio.com"
+        };
+
+        // Firebase初期化
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // DOM要素
+        const mp3List = document.getElementById('mp3-list');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageInfo = document.querySelector('.page-info');
+        
+        // 状態管理変数
+        let allMP3Files = [];
+        let currentPage = 1;
+        let itemsPerPage = 3; // 1ページあたり3つのアイテム
+        let totalPages = 1;
+        let currentPlayingAudio = null;
+        let currentPlayingItem = null;
+        let swiperInstance = null; // カルーセルのSwiperインスタンスを保存するための変数
+        
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+        
+        // アプリケーション初期化
+        function initApp() {
+            // ローディング開始時間を記録
+            window.loadingStartTime = Date.now();
+            
+            // ローディングスピナーを表示
+            showLoading();
+            
+            // MP3ファイルを読み込む - 遅延させる
+            setTimeout(() => {
+                loadAllMP3Files();
+            }, 1000); // 1秒遅延
+            
+            // ページネーションボタンのイベント設定
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    stopCurrentAudio();
+                    currentPage--;
+                    updatePagination();
+                    displayMP3List();
+                }
+            });
+            
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    stopCurrentAudio();
+                    currentPage++;
+                    updatePagination();
+                    displayMP3List();
+                }
+            });
+        }
+        
+        // ローディングスピナーを表示
+        function showLoading() {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'flex';
+            }
+        }
+        
+        // ローディングスピナーを非表示
+        function hideLoading() {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (loadingSpinner) {
+                // 即座に非表示にせず、最低でも一定時間（5秒）経過後に非表示にする
+                const minLoadingTime = 5000; // 4秒から5秒に延長
+                const startTime = window.loadingStartTime || Date.now();
+                const elapsedTime = Date.now() - startTime;
+                
+                if (elapsedTime >= minLoadingTime) {
+                    // 十分な時間が経過していれば即時非表示
+                    loadingSpinner.style.display = 'none';
+                } else {
+                    // まだ最低表示時間に達していない場合は、残り時間後に非表示
+                    const remainingTime = minLoadingTime - elapsedTime;
+                    setTimeout(() => {
+                        loadingSpinner.style.display = 'none';
+                    }, remainingTime);
+                }
+            }
+        }
+        
+        // ファイルサイズをフォーマット
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 Bytes';
+            
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            
+            return parseFloat((bytes / Math.pow(1024, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // MP3ダウンロード
+        function downloadMP3(file) {
+            const a = document.createElement('a');
+            a.href = file.data;
+            a.download = file.name + '.mp3';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            // ダウンロード情報をFirebaseに保存
+            database.ref('downloads/' + file.key).set({
+                downloaded: true,
+                timestamp: Date.now()
+            }).then(() => {
+                showNotification(file.name + ' のダウンロードが完了しました', 'success');
+                
+                // ダウンロードボタンを無効化
+                const downloadButtons = document.querySelectorAll(`.mp3-item[data-key="${file.key}"] .download-button`);
+                downloadButtons.forEach(button => {
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fas fa-check"></i> ダウンロード済み';
+                    button.classList.add('downloaded');
+                });
+                
+                // MP3リストを更新
+                loadAllMP3Files();
+            }).catch(error => {
+                console.error('ダウンロード情報の保存エラー:', error);
+            });
+        }
+
+        // すべてのMP3ファイルを読み込む
+        function loadAllMP3Files() {
+            database.ref('audio').once('value')
+                .then((snapshot) => {
+                    if (!snapshot.exists()) {
+                        mp3List.innerHTML = '<div class="no-items">MP3ファイルがありません</div>';
+                        hideLoading();
+                        return;
+                    }
+                    
+                    // データを配列に変換
+                    allMP3Files = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const key = childSnapshot.key;
+                        const fileData = childSnapshot.val();
+                        allMP3Files.push({
+                            key: key,
+                            name: fileData.name || 'No Name',
+                            timestamp: fileData.timestamp || 0,
+                            size: fileData.size || 0,
+                            type: fileData.type || 'audio/mp3',
+                            data: fileData.data || null,
+                            thumbnail: fileData.thumbnail || null,
+                            notionTitle: fileData.notionTitle || '',
+                            notionUrl: fileData.notionUrl || '',
+                            orderNumber: fileData.orderNumber || null
+                        });
+                    });
+                    
+                    // 番号順（orderNumber）でソート
+                    allMP3Files.sort((a, b) => {
+                        if (a.orderNumber !== null && b.orderNumber !== null) {
+                            return a.orderNumber - b.orderNumber;
+                        } else if (a.orderNumber !== null) {
+                            return -1;
+                        } else if (b.orderNumber !== null) {
+                            return 1;
+                        } else {
+                            return a.timestamp - b.timestamp;
+                        }
+                    });
+                    
+                    // ページネーション設定
+                    totalPages = Math.ceil(allMP3Files.length / itemsPerPage);
+                    updatePagination();
+                    
+                    // MP3リスト表示
+                    displayMP3List();
+                    
+                    // カルーセル初期化
+                    initCarousel();
+                    
+                    // ローディングを非表示
+                    hideLoading();
+                })
+                .catch((error) => {
+                    console.error('MP3データの読み込みエラー:', error);
+                    mp3List.innerHTML = '<div class="no-items">データ読み込みエラー</div>';
+                    hideLoading();
+                    showNotification('データ読み込みエラー: ' + error.message, 'error');
+                });
+        }
+
+        // MP3リスト表示
+        function displayMP3List() {
+            mp3List.innerHTML = '';
+            
+            // 現在のページのアイテムを計算
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, allMP3Files.length);
+            const currentPageItems = allMP3Files.slice(startIndex, endIndex);
+            
+            // MP3アイテムがない場合
+            if (currentPageItems.length === 0) {
+                mp3List.innerHTML = '<div class="no-items">MP3ファイルがありません</div>';
+                return;
+            }
+            
+            // 現在再生中のアイテムのキーを取得
+            const currentPlayingKey = currentPlayingAudio ? currentPlayingAudio.dataset.key : null;
+            
+            // ダウンロード情報を取得
+            database.ref('downloads').once('value').then((snapshot) => {
+                let downloadedFiles = {};
+                if (snapshot.exists()) {
+                    downloadedFiles = snapshot.val();
+                }
+                
+                // MP3アイテムを作成
+                currentPageItems.forEach((file, index) => {
+                    const itemNumber = file.orderNumber !== null ? file.orderNumber : (startIndex + index + 1);
+                    const sampleId = itemNumber.toString().padStart(4, '0');
+                    const fileName = file.name || `サンプル${sampleId}`;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'mp3-item';
+                    item.dataset.key = file.key;
+                    
+                    // 番号表示
+                    const numberDisplay = document.createElement('div');
+                    numberDisplay.className = 'mp3-number-display';
+                    numberDisplay.textContent = itemNumber;
+                    
+                    // サムネイル
+                    const thumbnailContainer = document.createElement('div');
+                    thumbnailContainer.className = 'mp3-thumbnail';
+                    
+                    if (file.thumbnail) {
+                        thumbnailContainer.innerHTML = `<img src="${file.thumbnail}" alt="${fileName}">`;
+                    } else {
+                        thumbnailContainer.innerHTML = '<div class="no-image"><i class="fas fa-music"></i></div>';
+                    }
+                    
+                    // リボン効果
+                    const ribbonWrapper = document.createElement('div');
+                    ribbonWrapper.className = 'ribbon-wrapper';
+                    ribbonWrapper.innerHTML = '<div class="ribbon"></div>';
+                    
+                    // 情報コンテナ
+                    const contentContainer = document.createElement('div');
+                    contentContainer.className = 'mp3-content';
+                    
+                    // タイトル
+                    const title = document.createElement('div');
+                    title.className = 'mp3-title';
+                    title.textContent = fileName;
+                    
+                    // ボタンコンテナ
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'button-container';
+                    
+                    // 再生/停止ボタン
+                    const playButton = document.createElement('button');
+                    playButton.className = 'play-btn';
+                    
+                    // 現在再生中かどうかをチェック
+                    const isPlaying = currentPlayingKey === file.key;
+                    
+                    // ボタンのテキストを設定
+                    if (isPlaying) {
+                        playButton.innerHTML = '<i class="fas fa-pause"></i> 停止';
+                        item.classList.add('now-playing');
+                    } else {
+                        playButton.innerHTML = '<i class="fas fa-play"></i> 再生';
+                    }
+                    
+                    // オーディオ要素
+                    const audio = document.createElement('audio');
+                    audio.style.display = 'none';
+                    audio.dataset.key = file.key;
+                    audio.dataset.sampleId = sampleId;
+                    audio.dataset.title = fileName;
+                    
+                    if (file.data) {
+                        audio.src = file.data;
+                    }
+                    
+                    // 既に再生中ならフラグを追加
+                    if (isPlaying) {
+                        audio.setAttribute('data-playing', 'true');
+                    }
+                    
+                    // 再生停止ロジック
+                    playButton.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // 既に再生中の音声があれば停止
+                        if (currentPlayingAudio) {
+                            // もし同じ音声なら一時停止して終了
+                            if (currentPlayingAudio.dataset.key === file.key) {
+                                if (currentPlayingAudio.paused) {
+                                    // 一時停止中なら再開
+                                    currentPlayingAudio.play().catch(err => console.log('再生エラー:', err));
+                                    playButton.innerHTML = '<i class="fas fa-pause"></i> 停止';
+                                } else {
+                                    // 再生中なら一時停止（停止ではなく）
+                                    currentPlayingAudio.pause();
+                                    playButton.innerHTML = '<i class="fas fa-play"></i> 再生';
+                                }
+                                return;
+                            }
+                            // 他の音声なら停止
+                            stopCurrentAudio();
+                        }
+                        
+                        // 再生
+                        audio.play().catch(err => console.log('再生エラー:', err));
+                        
+                        // 状態を更新
+                        currentPlayingAudio = audio;
+                        currentPlayingItem = item;
+                        
+                        // ボタンのテキストを更新
+                        playButton.innerHTML = '<i class="fas fa-pause"></i> 停止';
+                        
+                        // 再生中クラスを追加
+                        item.classList.add('now-playing');
+                        
+                        // 再生フラグを設定
+                        audio.setAttribute('data-playing', 'true');
+                        
+                        // Trigger audio change event
+                        triggerAudioChangeEvent();
+                        
+                        // インジケーターを更新
+                        updateNowPlayingIndicator();
+                    });
+                    
+                    // オーディオ終了時イベント
+                    audio.addEventListener('ended', () => {
+                        stopCurrentAudio();
+                    });
+                    
+                    // ダウンロードボタン
+                    const downloadButton = document.createElement('button');
+                    downloadButton.className = 'download-button';
+                    
+                    // ダウンロード済みかチェック
+                    const isDownloaded = downloadedFiles[file.key] && downloadedFiles[file.key].downloaded;
+                    
+                    if (isDownloaded) {
+                        downloadButton.innerHTML = '<i class="fas fa-check"></i> ダウンロード済み';
+                        downloadButton.disabled = true;
+                        downloadButton.classList.add('downloaded');
+                    } else {
+                        downloadButton.innerHTML = '<i class="fas fa-download"></i> ダウンロード';
+                        downloadButton.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            downloadMP3(file);
+                        });
+                    }
+                    
+                    // 要素を組み立て
+                    buttonContainer.appendChild(playButton);
+                    buttonContainer.appendChild(downloadButton);
+                    
+                    contentContainer.appendChild(title);
+                    contentContainer.appendChild(buttonContainer);
+                    
+                    item.appendChild(numberDisplay);
+                    thumbnailContainer.appendChild(ribbonWrapper);
+                    item.appendChild(thumbnailContainer);
+                    item.appendChild(contentContainer);
+                    item.appendChild(audio);
+                    
+                    mp3List.appendChild(item);
+                });
+                
+                // 現在再生中のアイテムが見えるようにスクロール
+                if (currentPlayingItem) {
+                    const visiblePlayingItem = mp3List.querySelector(`.mp3-item[data-key="${currentPlayingAudio.dataset.key}"]`);
+                    if (visiblePlayingItem) {
+                        setTimeout(() => {
+                            visiblePlayingItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    }
+                }
+            }).catch(error => {
+                console.error('ダウンロード情報の取得エラー:', error);
+                showNotification('ダウンロード情報の取得に失敗しました', 'error');
+            });
+        }
+        
+        // 音声再生
+        function playAudio(item, audio, file) {
+            // 現在再生中の音声があれば停止
+            stopCurrentAudio();
+            
+            // 新しい音声を再生
+            currentPlayingAudio = audio;
+            currentPlayingItem = item;
+            
+            // 再生
+            audio.play().catch(err => console.log('再生エラー:', err));
+            
+            // 再生中クラスを追加
+            item.classList.add('now-playing');
+            
+            // 再生フラグを設定
+            audio.setAttribute('data-playing', 'true');
+            
+            // Trigger audio change event
+            triggerAudioChangeEvent();
+            
+            // 再生ボタンを更新
+            const playBtn = item.querySelector('.play-btn');
+            if (playBtn) {
+                playBtn.innerHTML = '<i class="fas fa-pause"></i> 停止';
+            }
+            
+            // インジケーターを更新
+            updateNowPlayingIndicator();
+        }
+        
+        // 現在の再生を停止
+        function stopCurrentAudio() {
+            // すべての再生中のオーディオを停止
+            document.querySelectorAll('audio[data-playing="true"]').forEach(audio => {
+                audio.pause();
+                // 再生位置をリセットしない (currentTime = 0 を削除)
+                audio.removeAttribute('data-playing');
+            });
+            
+            if (currentPlayingAudio) {
+                currentPlayingAudio.pause();
+                // 再生位置をリセットしない (currentTime = 0 を削除)
+                
+                // 再生ボタンのアイコンを戻す
+                if (currentPlayingItem) {
+                    const playBtn = currentPlayingItem.querySelector('.play-btn');
+                    if (playBtn) {
+                        playBtn.innerHTML = '<i class="fas fa-play"></i> 再生';
+                    }
+                    
+                    // MP3アイテムから再生中クラスを削除
+                    currentPlayingItem.classList.remove('now-playing');
+                }
+                
+                currentPlayingAudio = null;
+                currentPlayingItem = null;
+                
+                // Trigger audio change event
+                triggerAudioChangeEvent();
+            }
+            
+            // カルーセルの再生状態をリセット
+            document.querySelectorAll('.swiper-slide').forEach(slide => {
+                slide.classList.remove('now-playing');
+                const playButton = slide.querySelector('.carousel-play-button');
+                if (playButton) {
+                    playButton.innerHTML = '<i class="fas fa-play"></i>';
+                }
+                
+                const slideAudio = slide.querySelector('audio');
+                if (slideAudio) {
+                    slideAudio.pause();
+                    // 再生位置をリセットしない (currentTime = 0 を削除)
+                    slideAudio.removeAttribute('data-playing');
+                }
+            });
+            
+            // カルーセルの自動再生を再開
+            if (swiperInstance && swiperInstance.autoplay) {
+                swiperInstance.autoplay.start();
+            }
+            
+            // Now Playing インジケーターを更新
+            updateNowPlayingIndicator();
+        }
+        
+        // ページネーション更新
+        function updatePagination() {
+            pageInfo.textContent = `${currentPage} / ${totalPages}`;
+            
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= totalPages;
+            
+            prevPageBtn.innerHTML = '<i class="fas fa-chevron-left" style="font-size: 20px; margin-right: 8px;"></i>前のページ';
+            nextPageBtn.innerHTML = '次のページ<i class="fas fa-chevron-right" style="font-size: 20px; margin-left: 8px;"></i>';
+        }
+        
+        // カルーセル初期化
+        function initCarousel() {
+            const carouselTrack = document.getElementById('carouselTrack');
+            const carouselContainer = document.getElementById('carouselContainer');
+            
+            if (!carouselTrack || !allMP3Files || allMP3Files.length === 0) {
+                return;
+            }
+            
+            // 最大8個までのアイテムを表示
+            const featuredItems = allMP3Files.slice(0, 8);
+            
+            // ダウンロード情報を取得
+            database.ref('downloads').once('value').then((snapshot) => {
+                let downloadedFiles = {};
+                if (snapshot.exists()) {
+                    downloadedFiles = snapshot.val();
+                }
+
+                // スライドを生成
+                carouselTrack.innerHTML = ''; // Clear existing slides
+                featuredItems.forEach((file, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'swiper-slide';
+                    
+                    // サンプル番号
+                    const itemNumber = file.orderNumber || (index + 1);
+                    const sampleId = itemNumber.toString().padStart(4, '0');
+                    // Use actual file name from Firebase
+                    const fileName = file.name || `サンプル${sampleId}`;
+                    
+                    // スライドHTML
+                    slide.innerHTML = `
+                        <div class="carousel-slide" data-key="${file.key}">
+                            <a href="#" class="carousel-link">
+                                <img class="carousel-image fade-in" 
+                                    src="${file.thumbnail || 'https://via.placeholder.com/380x240/333/666?text=No+Image'}" 
+                                    alt="${fileName}" 
+                                    fetchpriority="high" />
+                                <div class="carousel-overlay">
+                                    <div class="carousel-content">
+                                        <button class="carousel-play-button">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <div class="carousel-title">${fileName}</div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                    
+                    // オーディオ要素
+                    const audio = document.createElement('audio');
+                    audio.style.display = 'none';
+                    audio.dataset.key = file.key;
+                    audio.dataset.sampleId = sampleId;
+                    audio.dataset.title = fileName;
+                    
+                    if (file.data) {
+                        audio.src = file.data;
+                    }
+                    
+                    // オーディオ終了時イベント
+                    audio.addEventListener('ended', () => {
+                        const playButton = slide.querySelector('.carousel-play-button');
+                        if (playButton) {
+                            playButton.innerHTML = '<i class="fas fa-play"></i>';
+                        }
+                        slide.classList.remove('now-playing');
+                        audio.removeAttribute('data-playing');
+                        updateNowPlayingIndicator();
+                        
+                        // オーディオが終了したらカルーセルの自動再生を再開
+                        if (swiperInstance && swiperInstance.autoplay) {
+                            swiperInstance.autoplay.start();
+                        }
+                    });
+                    
+                    slide.appendChild(audio);
+                    carouselTrack.appendChild(slide);
+                    
+                    // 再生ボタンイベント
+                    const playButton = slide.querySelector('.carousel-play-button');
+                    playButton.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // オーディオの再生/停止を切り替え
+                        if (audio.paused) {
+                            // 現在のタイムがほぼ0または終了している場合は他の音声を停止
+                            if (audio.currentTime < 0.1 || audio.ended) {
+                                // 他のすべての音声を停止
+                                document.querySelectorAll('.swiper-slide').forEach(s => {
+                                    if (s !== slide) {
+                                        const a = s.querySelector('audio');
+                                        if (a) {
+                                            a.pause();
+                                            a.removeAttribute('data-playing');
+                                        }
+                                        const pb = s.querySelector('.carousel-play-button');
+                                        if (pb) {
+                                            pb.innerHTML = '<i class="fas fa-play"></i>';
+                                        }
+                                        s.classList.remove('now-playing');
+                                    }
+                                });
+                                
+                                // MP3リストの再生も停止
+                                stopCurrentAudio();
+                            }
+                            
+                            // 選択したオーディオを再生
+                            audio.play().catch(err => console.log('再生エラー:', err));
+                            playButton.innerHTML = '<i class="fas fa-pause"></i>';
+                            slide.classList.add('now-playing');
+                            audio.setAttribute('data-playing', 'true');
+                            
+                            // カルーセルの自動再生を停止
+                            if (swiperInstance && swiperInstance.autoplay) {
+                                swiperInstance.autoplay.stop();
+                            }
+                            
+                            // Trigger audio change event
+                            triggerAudioChangeEvent();
+                            updateNowPlayingIndicator();
+                        } else {
+                            // 現在再生中のオーディオを一時停止
+                            audio.pause();
+                            playButton.innerHTML = '<i class="fas fa-play"></i>';
+                            // now-playing クラスは残して再生中のスタイルを維持
+                            // slide.classList.remove('now-playing');
+                            
+                            // 一時停止しても data-playing 属性は残して状態を保持
+                            // audio.removeAttribute('data-playing');
+                            
+                            // カルーセルの自動再生は停止したままにする
+                            // カルーセルが自動で次に移動するとUIと再生状態が不一致になるため
+                            
+                            // Trigger audio change event
+                            triggerAudioChangeEvent();
+                            updateNowPlayingIndicator();
+                        }
+                    });
+                    
+                    // スライドクリックでページ移動
+                    slide.querySelector('.carousel-link').addEventListener('click', (e) => {
+                        if (!e.target.closest('.carousel-play-button')) {
+                            e.preventDefault();
+                            // ファイルのインデックスを特定
+                            const fileIndex = allMP3Files.findIndex(f => 
+                                f.key === file.key || 
+                                (f.orderNumber && file.orderNumber && f.orderNumber === file.orderNumber)
+                            );
+                            
+                            if (fileIndex !== -1) {
+                                const targetPage = Math.floor(fileIndex / itemsPerPage) + 1;
+                                if (targetPage !== currentPage) {
+                                    stopCurrentAudio();
+                                    currentPage = targetPage;
+                                    updatePagination();
+                                    displayMP3List();
+                                    
+                                    // スクロール
+                                    setTimeout(() => {
+                                        const targetItem = document.querySelector(`#mp3-list .mp3-item:nth-child(${fileIndex % itemsPerPage + 1})`);
+                                        if (targetItem) {
+                                            targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }
+                                    }, 100);
+                                }
+                            }
+                        }
+                    });
+                });
+                
+                // Swiperインスタンス作成
+                if (swiperInstance) {
+                    swiperInstance.destroy(true, true);
+                }
+                swiperInstance = new Swiper(carouselContainer, {
+                    slidesPerView: 'auto',
+                    centeredSlides: true,
+                    spaceBetween: 30,
+                    loop: true,
+                    loopedSlides: featuredItems.length,
+                    speed: 700,
+                    autoplay: {
+                        delay: 5000,
+                        disableOnInteraction: false
+                    },
+                    pagination: {
+                        el: '#carouselDots',
+                        clickable: true
+                    },
+                    navigation: {
+                        nextEl: '.carousel-next',
+                        prevEl: '.carousel-prev'
+                    },
+                    breakpoints: {
+                        320: {
+                            slidesPerView: 1.2,
+                            spaceBetween: 15
+                        },
+                        768: {
+                            slidesPerView: 1.8,
+                            spaceBetween: 20
+                        },
+                        1024: {
+                            slidesPerView: 2.5,
+                            spaceBetween: 30
+                        },
+                        1440: {
+                            slidesPerView: 3.2,
+                            spaceBetween: 40
+                        }
+                    },
+                    effect: 'coverflow',
+                    coverflowEffect: {
+                        rotate: 0,
+                        stretch: 0,
+                        depth: 100,
+                        modifier: 1,
+                        slideShadows: false
+                    }
+                });
+            }).catch(error => {
+                console.error('ダウンロード情報の取得エラー:', error);
+            });
+        }
+        
+        // 通知表示
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // アニメーションを適用するためのリフロー強制
+            notification.offsetHeight;
+            
+            // 表示
+            notification.classList.add('show');
+            
+            // 一定時間後に非表示
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Helper function to check if an element is in the viewport
+        function isElementInViewport(el) {
+            const rect = el.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
+        }
+
+        // Helper function to trigger audio change event
+        function triggerAudioChangeEvent() {
+            const event = new CustomEvent('audioChange');
+            document.dispatchEvent(event);
+        }
+
+        // Update the now playing indicator
+        function updateNowPlayingIndicator() {
+            // Remove now-playing class from all MP3 cards
+            document.querySelectorAll('.mp3-card.now-playing').forEach(card => {
+                card.classList.remove('now-playing');
+            });
+            
+            // Remove existing now-playing indicators
+            document.querySelectorAll('.now-playing-indicator').forEach(indicator => {
+                indicator.remove();
+            });
+            
+            // Get the now playing header and title elements
+            const nowPlayingHeader = document.getElementById('nowPlayingHeader');
+            const nowPlayingTitle = document.getElementById('nowPlayingTitle');
+            
+            // Check if any audio is currently playing
+            const playingAudio = document.querySelector('audio[data-playing="true"]');
+            
+            if (playingAudio) {
+                // Now Playing Headerは常に非表示にする
+                if (nowPlayingHeader) {
+                    nowPlayingHeader.style.display = 'none';
+                }
+                
+                // Find the MP3 card that corresponds to the playing audio
+                const mp3Card = document.querySelector(`.mp3-card[data-key="${playingAudio.getAttribute('data-key')}"]`);
+                
+                if (mp3Card) {
+                    // Add now-playing class to the card
+                    mp3Card.classList.add('now-playing');
+                    
+                    // Create the now-playing indicator
+                    const indicator = document.createElement('div');
+                    indicator.className = 'now-playing-indicator';
+                    indicator.innerHTML = '<span>Now Playing</span>';
+                    
+                    // Find the thumbnail element in the card
+                    const thumbnail = mp3Card.querySelector('.mp3-card-thumbnail');
+                    if (thumbnail) {
+                        // Append the indicator to the thumbnail
+                        thumbnail.appendChild(indicator);
+                    }
+                    
+                    // Scroll the card into view if it's not visible
+                    if (!isElementInViewport(mp3Card)) {
+                        mp3Card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            } else {
+                // If no audio is playing, update the header accordingly
+                if (nowPlayingTitle) {
+                    nowPlayingTitle.textContent = 'No track playing';
+                }
+                
+                if (nowPlayingHeader) {
+                    nowPlayingHeader.style.display = 'none';
+                }
+            }
+        }
+        
+        // Listen for audio change events
+        document.addEventListener('audioChange', updateNowPlayingIndicator);
+
+        // Override the initApp function to maintain playback state
+        const originalInitApp = initApp;
+        initApp = function() {
+            originalInitApp();
+            
+            // Update the now playing indicator on page load
+            setTimeout(updateNowPlayingIndicator, 500);
+        };
+    </script>
+</body>
+</html> 
