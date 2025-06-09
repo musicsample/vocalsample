@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動画Sample</title>
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            padding: 0;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .slider-container {
+            position: relative;
+            margin: 30px auto;
+            width: 100%;
+            overflow: hidden;
+            padding: 20px 0;
+        }
+        
+        .slider-wrapper {
+            display: flex;
+            width: max-content;
+            animation: scroll-left 60s linear infinite;
+            padding: 0 20px;
+            gap: 20px;
+        }
+        
+        /* スライダーが画面にホバーされたときのアニメーション一時停止 */
+        .slider-container:hover .slider-wrapper {
+            animation-play-state: paused;
+        }
+        
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        
+        .card {
+            flex: 0 0 auto;
+            width: 500px;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            background-color: #111;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: scale(1.02);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background-color: #000;
+        }
+        
+        .card video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .card:hover .video-controls {
+            opacity: 1;
+        }
+        
+        .play-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .play-button::after {
+            content: "";
+            border-style: solid;
+            border-width: 8px 0 8px 12px;
+            border-color: transparent transparent transparent white;
+            margin-left: 2px;
+        }
+        
+        .timeline {
+            flex: 1;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.3);
+            position: relative;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background-color: #e50914;
+            transition: width 0.1s linear;
+        }
+        
+        .time-display {
+            color: #fff;
+            font-size: 12px;
+            margin-left: 10px;
+            font-family: monospace;
+        }
+        
+        .card-id {
+            padding: 10px 15px;
+            font-size: 12px;
+            color: #aaa;
+            background-color: #191919;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: monospace;
+        }
+        
+        .main-player {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .main-player-container {
+            position: relative;
+            width: 80%;
+            max-width: 900px;
+            aspect-ratio: 16/9;
+        }
+        
+        .main-player video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .video-title {
+            margin-top: 15px;
+            font-size: 18px;
+        }
+        
+        .close-player {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .close-player::before,
+        .close-player::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background-color: white;
+        }
+        
+        .close-player::before {
+            transform: rotate(45deg);
+        }
+        
+        .close-player::after {
+            transform: rotate(-45deg);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px 0;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .fullscreen-button {
+            width: 30px;
+            height: 30px;
+            margin-left: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+
+        /* レスポンシブデザイン */
+        @media (max-width: 767px) {
+            .card {
+                width: 350px;
+            }
+        }
+
+        .images-section {
+            margin: 20px 0;
+            padding: 20px;
+        }
+
+        .images-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .image-card {
+            background-color: #111;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .image-card:hover {
+            transform: scale(1.02);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-info {
+            padding: 15px;
+        }
+
+        .image-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .image-details {
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loadingIndicator" class="loading">動画リストを読み込み中...</div>
+        
+        <div class="slider-container">
+            <div id="sliderWrapper" class="slider-wrapper"></div>
+        </div>
+        
+        <!-- 画像表示セクションをカルーセルの下に移動 -->
+        <div id="imagesSection" class="images-section">
+            <div id="imagesContainer" class="images-container"></div>
+        </div>
+        
+        <!-- 背景動画用フッターカルーセル -->
+        <div class="slider-container" style="margin-top: 50px;">
+            <div id="backgroundSliderWrapper" class="slider-wrapper"></div>
+        </div>
+        
+        <div id="mainPlayer" class="main-player">
+            <div class="close-player" id="closePlayer"></div>
+            <div class="main-player-container">
+                <video id="videoPlayer" controls></video>
+            </div>
+            <div id="videoTitle" class="video-title"></div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <script>
+        // MP4用Firebase設定
+        const mp4FirebaseConfig = {
+            databaseURL: "https://mp4sample-859e1-default-rtdb.firebaseio.com"
+        };
+        
+        // 背景用Firebase設定
+        const backgroundFirebaseConfig = {
+            databaseURL: "https://general-purpose-f7c46-default-rtdb.firebaseio.com"
+        };
+        
+        // Firebase初期化
+        const mp4FirebaseApp = firebase.initializeApp(mp4FirebaseConfig);
+        const mp4Database = mp4FirebaseApp.database();
+        
+        // 背景用Firebase初期化
+        const backgroundFirebaseApp = firebase.initializeApp(backgroundFirebaseConfig, "background-app");
+        const backgroundDatabase = backgroundFirebaseApp.database();
+        
+        // DOM要素
+        const sliderWrapper = document.getElementById('sliderWrapper');
+        const backgroundSliderWrapper = document.getElementById('backgroundSliderWrapper');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoTitle = document.getElementById('videoTitle');
+        const mainPlayer = document.getElementById('mainPlayer');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const closePlayer = document.getElementById('closePlayer');
+        const imagesContainer = document.getElementById('imagesContainer');
+        
+        // 変数
+        let currentVideoKey = null;
+        let videosData = [];
+        let backgroundVideosData = [];
+        let imagesData = [];
+        let videoProgressIntervals = {};
+        
+        // 動画リストの読み込み
+        function loadVideoList(callback) {
+            loadingIndicator.style.display = 'block';
+            sliderWrapper.innerHTML = '';
+            
+            mp4Database.ref('videos').once('value')
+                .then((snapshot) => {
+                    loadingIndicator.style.display = 'none';
+                    
+                    if (!snapshot.exists()) {
+                        sliderWrapper.innerHTML = '<div class="loading">動画がありません</div>';
+                        return;
+                    }
+                    
+                    // データを配列に変換
+                    videosData = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const key = childSnapshot.key;
+                        const fileData = childSnapshot.val();
+                        videosData.push({
+                            key: key,
+                            name: fileData.name || 'サンプルボーカル',
+                            timestamp: fileData.timestamp || 0,
+                            size: fileData.size || 0,
+                            data: fileData.data || null,
+                            orderNumber: fileData.orderNumber || null,
+                            linkedImageKey: fileData.linkedImageKey || null
+                        });
+                        console.log('動画データ読み込み:', key, 'linkedImageKey:', fileData.linkedImageKey);
+                    });
+                    
+                    // 番号順に並び替え
+                    videosData.sort((a, b) => {
+                        if (a.orderNumber !== null && b.orderNumber !== null) {
+                            return a.orderNumber - b.orderNumber;
+                        } else if (a.orderNumber !== null) {
+                            return -1;
+                        } else if (b.orderNumber !== null) {
+                            return 1;
+                        } else {
+                            return a.timestamp - b.timestamp;
+                        }
+                    });
+                    
+                    // カード表示
+                    displayVideoCards(videosData);
+                    
+                    // 無限スクロールのためのカードの複製
+                    duplicateCards();
+                    
+                    // すべての動画を再生
+                    playAllVideos();
+                    
+                    callback();
+                })
+                .catch((error) => {
+                    console.error('動画リストの読み込みエラー:', error);
+                    loadingIndicator.style.display = 'none';
+                    sliderWrapper.innerHTML = '<div class="loading">エラー: データを読み込めませんでした</div>';
+                });
+        }
+        
+        // 動画カードの表示
+        function displayVideoCards(videos) {
+            sliderWrapper.innerHTML = '';
+            
+            videos.forEach((video, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.key = video.key;
+                card.dataset.index = index;
+                
+                card.innerHTML = `
+                    <div class="video-container">
+                        <video muted loop autoplay playsinline>
+                            <source src="${video.data}" type="video/mp4">
+                        </video>
+                    </div>
+                `;
+                
+                const videoElement = card.querySelector('video');
+                
+                // 動画が終了したら先頭に戻して再生
+                videoElement.addEventListener('ended', () => {
+                    videoElement.currentTime = 0;
+                    videoElement.play().catch(e => console.log('再生エラー:', e));
+                });
+                
+                sliderWrapper.appendChild(card);
+            });
+        }
+        
+        // 時間のフォーマット（00:00形式）
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) seconds = 0;
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+        
+        // すべての動画を再生
+        function playAllVideos() {
+            const videos = document.querySelectorAll('.card video');
+            videos.forEach((video, index) => {
+                // 少しずつ再生開始時間をずらす
+                setTimeout(() => {
+                    video.play().catch(e => console.log('動画再生エラー:', e));
+                }, index * 300);
+            });
+        }
+        
+        // 無限スクロールのためにカードを複製する
+        function duplicateCards() {
+            // 既存のカードをすべて複製
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                const clone = card.cloneNode(true);
+                
+                // クローンにもイベントリスナーを設定
+                const videoElement = clone.querySelector('video');
+                
+                // 動画が終了したら先頭に戻して再生
+                videoElement.addEventListener('ended', () => {
+                    videoElement.currentTime = 0;
+                    videoElement.play().catch(e => console.log('再生エラー:', e));
+                });
+                
+                const dataKey = clone.dataset.key;
+                const video = videosData.find(v => v.key === dataKey);
+                
+                sliderWrapper.appendChild(clone);
+            });
+            
+            // アニメーションの持続時間を調整（より遅く）
+            const animationDuration = Math.max(60, videosData.length * 8);
+            sliderWrapper.style.animationDuration = animationDuration + 's';
+        }
+        
+        // メインプレーヤーで動画再生
+        function playVideoInMainPlayer(video) {
+            currentVideoKey = video.key;
+            
+            videoPlayer.src = video.data;
+            videoTitle.textContent = video.name;
+            mainPlayer.style.display = 'flex';
+            videoPlayer.play().catch(e => console.log('動画再生エラー:', e));
+        }
+        
+        // プレーヤーを閉じる
+        closePlayer.addEventListener('click', () => {
+            videoPlayer.pause();
+            mainPlayer.style.display = 'none';
+        });
+        
+        // 画像リストの読み込み
+        function loadImageList(callback) {
+            mp4Database.ref('images').once('value')
+                .then((snapshot) => {
+                    if (!snapshot.exists()) {
+                        imagesContainer.innerHTML = '<div class="loading">画像がありません</div>';
+                        return;
+                    }
+                    
+                    // データを配列に変換
+                    imagesData = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const key = childSnapshot.key;
+                        const fileData = childSnapshot.val();
+                        console.log('Firebase生データ:', key, fileData);
+                        imagesData.push({
+                            key: key,
+                            name: fileData.name || 'アップロード画像',
+                            timestamp: fileData.timestamp || 0,
+                            size: fileData.size || 0,
+                            data: fileData.data || null,
+                            orderNumber: fileData.orderNumber || null,
+                            linkedImageKey: fileData.linkedImageKey || null
+                        });
+                        console.log('画像データ読み込み:', key, 'linkedImageKey:', fileData.linkedImageKey);
+                    });
+                    
+                    // 番号順に並び替え
+                    imagesData.sort((a, b) => {
+                        if (a.orderNumber !== null && b.orderNumber !== null) {
+                            return a.orderNumber - b.orderNumber;
+                        } else if (a.orderNumber !== null) {
+                            return -1;
+                        } else if (b.orderNumber !== null) {
+                            return 1;
+                        } else {
+                            return b.timestamp - a.timestamp; // 画像は新しい順
+                        }
+                    });
+                    
+                    // 画像カード表示
+                    displayImageCards(imagesData);
+                    
+                    callback();
+                })
+                .catch((error) => {
+                    console.error('画像リストの読み込みエラー:', error);
+                    imagesContainer.innerHTML = '<div class="loading">エラー: 画像データを読み込めませんでした</div>';
+                });
+        }
+
+        // 画像カードの表示
+        function displayImageCards(images) {
+            imagesContainer.innerHTML = '';
+            
+            images.forEach((image, index) => {
+                const card = document.createElement('div');
+                card.className = 'image-card';
+                card.dataset.key = image.key;
+                
+                card.innerHTML = `
+                    <img src="${image.data}" alt="${image.name}">
+                `;
+                
+                // 画像クリックで紐づけられた動画一覧またはフルスクリーン表示
+                card.addEventListener('click', () => {
+                    console.log('画像クリック:', image.key);
+                    console.log('現在の動画データ数:', videosData.length);
+                    
+                    // 動画データから、この画像にリンクされている動画を検索
+                    const linkedVideos = videosData.filter(video => video.linkedImageKey === image.key);
+                    console.log('見つかった紐づけ動画:', linkedVideos);
+                    
+                    if (linkedVideos.length > 0) {
+                        showLinkedVideos(image, linkedVideos);
+                    } else {
+                        showImageFullscreen(image);
+                    }
+                });
+                
+                imagesContainer.appendChild(card);
+            });
+        }
+
+        // ファイルサイズのフォーマット
+        function formatFileSize(bytes) {
+            if (!bytes) return '不明';
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // 日付のフォーマット
+        function formatDate(timestamp) {
+            if (!timestamp) return '不明';
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP');
+        }
+
+        // 画像をフルスクリーンで表示
+        function showImageFullscreen(image) {
+            const fullscreenDiv = document.createElement('div');
+            fullscreenDiv.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.95);
+                z-index: 1000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+            `;
+
+            fullscreenDiv.innerHTML = `
+                <div style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer;" id="closeImageViewer">
+                    <span style="color: white; font-size: 24px; font-weight: bold;">&times;</span>
+                </div>
+                <img src="${image.data}" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+                <div style="margin-top: 15px; font-size: 18px; color: white;">${image.name}</div>
+            `;
+
+            document.body.appendChild(fullscreenDiv);
+
+            // 閉じるボタンのイベント
+            fullscreenDiv.querySelector('#closeImageViewer').addEventListener('click', () => {
+                document.body.removeChild(fullscreenDiv);
+            });
+
+            // 背景クリックで閉じる
+            fullscreenDiv.addEventListener('click', (e) => {
+                if (e.target === fullscreenDiv) {
+                    document.body.removeChild(fullscreenDiv);
+                }
+            });
+        }
+        
+        // 紐づけられた動画一覧を表示
+        function showLinkedVideos(image, linkedVideos) {
+            const videoListDiv = document.createElement('div');
+            videoListDiv.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.95);
+                z-index: 1000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                padding: 20px;
+                box-sizing: border-box;
+            `;
+
+            videoListDiv.innerHTML = `
+                <div style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer;" id="closeVideoList">
+                    <span style="color: white; font-size: 24px; font-weight: bold;">&times;</span>
+                </div>
+                <div style="background-color: #111; border-radius: 8px; padding: 20px; max-width: 600px; width: 100%; max-height: 80%; overflow-y: auto;">
+                    <h2 style="color: white; margin: 0 0 20px 0; text-align: center;">キャラ動画一覧</h2>
+                    <div id="linkedVideosList" style="display: flex; flex-direction: column; gap: 15px;"></div>
+                </div>
+            `;
+
+            const linkedVideosList = videoListDiv.querySelector('#linkedVideosList');
+            
+            // 複数の動画カードを作成
+            linkedVideos.forEach((linkedVideo, index) => {
+                const videoCard = document.createElement('div');
+                videoCard.style.cssText = `
+                    background-color: #1a1a1a;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin-bottom: 15px;
+                    transition: background-color 0.3s;
+                `;
+                
+                videoCard.innerHTML = `
+                    <video controls style="width: 100%; height: auto; border-radius: 4px;">
+                        <source src="${linkedVideo.data}" type="video/mp4">
+                    </video>
+                `;
+
+                // ホバー効果
+                videoCard.addEventListener('mouseenter', () => {
+                    videoCard.style.backgroundColor = '#2a2a2a';
+                });
+                videoCard.addEventListener('mouseleave', () => {
+                    videoCard.style.backgroundColor = '#1a1a1a';
+                });
+
+                linkedVideosList.appendChild(videoCard);
+            });
+
+            document.body.appendChild(videoListDiv);
+
+            // 閉じるボタンのイベント
+            videoListDiv.querySelector('#closeVideoList').addEventListener('click', () => {
+                document.body.removeChild(videoListDiv);
+            });
+
+            // 背景クリックで閉じる
+            videoListDiv.addEventListener('click', (e) => {
+                if (e.target === videoListDiv) {
+                    document.body.removeChild(videoListDiv);
+                }
+            });
+        }
+        
+        // ページロード時に動画リストを読み込む
+        document.addEventListener('DOMContentLoaded', () => {
+            // 読み込み完了状況を管理
+            let loadedCount = 0;
+            const totalLoads = 2; // キャラ動画と画像の2つ
+            
+            function checkAllLoaded() {
+                loadedCount++;
+                if (loadedCount === totalLoads) {
+                    // キャラ動画と画像の読み込みが完了したら背景動画を読み込み
+                    loadBackgroundVideoList();
+                }
+            }
+            
+            // キャラ動画と画像を並行して読み込み
+            loadVideoList(checkAllLoaded);
+            loadImageList(checkAllLoaded);
+        });
+        
+        // 背景動画リストの読み込み
+        function loadBackgroundVideoList() {
+            backgroundSliderWrapper.innerHTML = '<div class="loading">背景動画を読み込み中...</div>';
+            
+            backgroundDatabase.ref('backgrounds').once('value')
+                .then((snapshot) => {
+                    if (!snapshot.exists()) {
+                        backgroundSliderWrapper.innerHTML = '<div class="loading">背景動画がありません</div>';
+                        return;
+                    }
+                    
+                    // データを配列に変換
+                    backgroundVideosData = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const key = childSnapshot.key;
+                        const fileData = childSnapshot.val();
+                        
+                        // 動画ファイルのみフィルタリング
+                        if (fileData.type && fileData.type.startsWith('video/')) {
+                            backgroundVideosData.push({
+                                key: key,
+                                name: fileData.name || '背景動画',
+                                timestamp: fileData.timestamp || 0,
+                                size: fileData.size || 0,
+                                data: fileData.data || null,
+                                orderNumber: fileData.orderNumber || null
+                            });
+                        }
+                    });
+                    
+                    // 番号順に並び替え
+                    backgroundVideosData.sort((a, b) => {
+                        if (a.orderNumber !== null && b.orderNumber !== null) {
+                            return a.orderNumber - b.orderNumber;
+                        } else if (a.orderNumber !== null) {
+                            return -1;
+                        } else if (b.orderNumber !== null) {
+                            return 1;
+                        } else {
+                            return a.timestamp - b.timestamp;
+                        }
+                    });
+                    
+                    // カード表示
+                    displayBackgroundVideoCards(backgroundVideosData);
+                    
+                    // 無限スクロールのためのカードの複製
+                    duplicateBackgroundCards();
+                    
+                    // すべての背景動画を再生
+                    playAllBackgroundVideos();
+                })
+                .catch((error) => {
+                    console.error('背景動画リストの読み込みエラー:', error);
+                    backgroundSliderWrapper.innerHTML = '<div class="loading">エラー: 背景動画データを読み込めませんでした</div>';
+                });
+        }
+        
+        // 背景動画カードの表示
+        function displayBackgroundVideoCards(videos) {
+            backgroundSliderWrapper.innerHTML = '';
+            
+            videos.forEach((video, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.key = video.key;
+                card.dataset.index = index;
+                
+                card.innerHTML = `
+                    <div class="video-container">
+                        <video muted loop autoplay playsinline>
+                            <source src="${video.data}" type="video/mp4">
+                        </video>
+                    </div>
+                `;
+                
+                const videoElement = card.querySelector('video');
+                
+                // 動画が終了したら先頭に戻して再生
+                videoElement.addEventListener('ended', () => {
+                    videoElement.currentTime = 0;
+                    videoElement.play().catch(e => console.log('背景動画再生エラー:', e));
+                });
+                
+                backgroundSliderWrapper.appendChild(card);
+            });
+        }
+        
+        // すべての背景動画を再生
+        function playAllBackgroundVideos() {
+            const videos = document.querySelectorAll('#backgroundSliderWrapper .card video');
+            videos.forEach((video, index) => {
+                // 少しずつ再生開始時間をずらす
+                setTimeout(() => {
+                    video.play().catch(e => console.log('背景動画再生エラー:', e));
+                }, index * 300);
+            });
+        }
+        
+        // 無限スクロールのために背景カードを複製する
+        function duplicateBackgroundCards() {
+            // 既存のカードをすべて複製
+            const cards = document.querySelectorAll('#backgroundSliderWrapper .card');
+            cards.forEach(card => {
+                const clone = card.cloneNode(true);
+                
+                // クローンにもイベントリスナーを設定
+                const videoElement = clone.querySelector('video');
+                
+                // 動画が終了したら先頭に戻して再生
+                videoElement.addEventListener('ended', () => {
+                    videoElement.currentTime = 0;
+                    videoElement.play().catch(e => console.log('背景動画再生エラー:', e));
+                });
+                
+                const dataKey = clone.dataset.key;
+                const video = backgroundVideosData.find(v => v.key === dataKey);
+                
+                backgroundSliderWrapper.appendChild(clone);
+            });
+            
+            // アニメーションの持続時間を調整（より遅く）
+            const animationDuration = Math.max(60, backgroundVideosData.length * 8);
+            backgroundSliderWrapper.style.animationDuration = animationDuration + 's';
+        }
+    </script>
+</body>
+</html> 
