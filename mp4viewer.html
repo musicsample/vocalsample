@@ -474,29 +474,38 @@
         
         // 無限スクロールのためにカードを複製する
         function duplicateCards() {
-            // 既存のカードをすべて複製
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                const clone = card.cloneNode(true);
-                
-                // クローンにもイベントリスナーを設定
-                const videoElement = clone.querySelector('video');
-                
-                // 動画が終了したら先頭に戻して再生
-                videoElement.addEventListener('ended', () => {
-                    videoElement.currentTime = 0;
-                    videoElement.play().catch(e => console.log('再生エラー:', e));
-                });
-                
-                const dataKey = clone.dataset.key;
-                const video = videosData.find(v => v.key === dataKey);
-                
-                sliderWrapper.appendChild(clone);
-            });
+            // 既存のカードをすべて複製（3倍にして確実な無限ループを実現）
+            const originalCards = document.querySelectorAll('.slider-wrapper .card');
+            const totalCards = originalCards.length;
             
-            // アニメーションの持続時間を調整（より遅く）
-            const animationDuration = Math.max(60, videosData.length * 8);
+            // 元のカードを2回追加で複製（合計3倍）
+            for (let round = 0; round < 2; round++) {
+                originalCards.forEach(card => {
+                    const clone = card.cloneNode(true);
+                    
+                    // クローンにもイベントリスナーを設定
+                    const videoElement = clone.querySelector('video');
+                    
+                    // 動画が終了したら先頭に戻して再生
+                    videoElement.addEventListener('ended', () => {
+                        videoElement.currentTime = 0;
+                        videoElement.play().catch(e => console.log('再生エラー:', e));
+                    });
+                    
+                    const dataKey = clone.dataset.key;
+                    const video = videosData.find(v => v.key === dataKey);
+                    
+                    sliderWrapper.appendChild(clone);
+                });
+            }
+            
+            // アニメーションの持続時間を調整（より長く、滑らか）
+            const animationDuration = Math.max(120, totalCards * 15);
             sliderWrapper.style.animationDuration = animationDuration + 's';
+            
+            // アニメーションが確実に無限ループするように設定
+            sliderWrapper.style.animationIterationCount = 'infinite';
+            sliderWrapper.style.animationFillMode = 'none';
         }
         
         // メインプレーヤーで動画再生
@@ -848,29 +857,38 @@
         
         // 無限スクロールのために背景カードを複製する
         function duplicateBackgroundCards() {
-            // 既存のカードをすべて複製
-            const cards = document.querySelectorAll('#backgroundSliderWrapper .card');
-            cards.forEach(card => {
-                const clone = card.cloneNode(true);
-                
-                // クローンにもイベントリスナーを設定
-                const videoElement = clone.querySelector('video');
-                
-                // 動画が終了したら先頭に戻して再生
-                videoElement.addEventListener('ended', () => {
-                    videoElement.currentTime = 0;
-                    videoElement.play().catch(e => console.log('背景動画再生エラー:', e));
-                });
-                
-                const dataKey = clone.dataset.key;
-                const video = backgroundVideosData.find(v => v.key === dataKey);
-                
-                backgroundSliderWrapper.appendChild(clone);
-            });
+            // 既存のカードをすべて複製（3倍にして確実な無限ループを実現）
+            const originalCards = document.querySelectorAll('#backgroundSliderWrapper .card');
+            const totalCards = originalCards.length;
             
-            // アニメーションの持続時間を調整（より遅く）
-            const animationDuration = Math.max(60, backgroundVideosData.length * 8);
+            // 元のカードを2回追加で複製（合計3倍）
+            for (let round = 0; round < 2; round++) {
+                originalCards.forEach(card => {
+                    const clone = card.cloneNode(true);
+                    
+                    // クローンにもイベントリスナーを設定
+                    const videoElement = clone.querySelector('video');
+                    
+                    // 動画が終了したら先頭に戻して再生
+                    videoElement.addEventListener('ended', () => {
+                        videoElement.currentTime = 0;
+                        videoElement.play().catch(e => console.log('背景動画再生エラー:', e));
+                    });
+                    
+                    const dataKey = clone.dataset.key;
+                    const video = backgroundVideosData.find(v => v.key === dataKey);
+                    
+                    backgroundSliderWrapper.appendChild(clone);
+                });
+            }
+            
+            // アニメーションの持続時間を調整（より長く、滑らか）
+            const animationDuration = Math.max(120, totalCards * 15);
             backgroundSliderWrapper.style.animationDuration = animationDuration + 's';
+            
+            // アニメーションが確実に無限ループするように設定
+            backgroundSliderWrapper.style.animationIterationCount = 'infinite';
+            backgroundSliderWrapper.style.animationFillMode = 'none';
         }
     </script>
 </body>
